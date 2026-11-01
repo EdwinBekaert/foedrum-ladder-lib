@@ -1,0 +1,11 @@
+{
+  "name": "greet",
+  "version": "1.0.0",
+  "description": "Greets a visitor: a small library for testing an order across two repositories.",
+  "type": "module",
+  "exports": "./greet.mjs",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test --experimental-test-coverage --test-reporter=tap --test-reporter-destination=test-report.tap --test-reporter=lcov --test-reporter-destination=coverage.lcov"
+  }
+}

@@ -1,0 +1,13 @@
+// Where the library's code, tests and reports are (Foedrum's test map).
+{
+  "derivedFrom": { "globs": ["package.json"], "paths": ["package.json"] },
+  "modules": [
+    {
+      "name": "greet",
+      "code": ["greet.mjs"],
+      "tests": { "paths": ["*.test.mjs"] },
+      "testReport": { "format": "tap", "path": "test-report.tap" },
+      "coverage": { "format": "lcov", "path": "coverage.lcov" }
+    }
+  ]
+}

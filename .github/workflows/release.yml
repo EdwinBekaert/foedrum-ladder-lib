@@ -1,0 +1,49 @@
+# Every merged pull request is released as the next minor version: package.json is bumped on main,
+# that commit is tagged v<version>, and a GitHub release names the pull request.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Find the merged pull request
+        id: pull
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null)][0].number // empty')
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+      - name: Bump, tag and release
+        if: steps.pull.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ steps.pull.outputs.number }}
+        run: |
+          version=$(node -e '
+            const fs = require("node:fs");
+            const manifest = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            const [major, minor] = manifest.version.split(".").map(Number);
+            manifest.version = `${major}.${minor + 1}.0`;
+            fs.writeFileSync("package.json", `${JSON.stringify(manifest, null, 2)}\n`);
+            console.log(manifest.version);
+          ')
+          title=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUMBER" --jq .title)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release v$version"
+          git tag "v$version"
+          git push origin HEAD:main "v$version"
+          gh release create "v$version" --title "v$version" --notes "Merged #$NUMBER: $title"
